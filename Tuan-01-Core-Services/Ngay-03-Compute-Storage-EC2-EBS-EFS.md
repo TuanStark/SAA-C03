@@ -20,10 +20,54 @@ Hiểu rõ mô hình giá của EC2 là chìa khóa để xử lý các câu h�
 1. **Compute Savings Plans**: Linh hoạt nhất. Áp dụng cho **EC2 (bất kể instance family, OS, Region), AWS Fargate, và AWS Lambda**.
 2. **EC2 Instance Savings Plans**: Giảm giá sâu hơn Compute Savings Plans, nhưng bị cố định vào một **Instance Family cụ thể trong một Region cụ thể** (ví dụ: c6g ở us-east-1), cho phép đổi OS hoặc size trong family đó.
 
-> 💡 **Chiến lược phối hợp Compute tối ưu chi phí theo AWS Well-Architected Framework**:
-> - **Lớp tải nền (Baseline steady-state load)**: Dùng **Savings Plans** hoặc **Reserved Instances** (Chạy 24/7 với chi phí rẻ nhất).
-> - **Lớp tải tăng đột biến theo mùa vụ hoặc có thể dự đoán trước**: Dùng **On-Demand Instances**.
-> - **Lớp xử lý nền bất đồng bộ, tính toán song song, stateless có thể chạy lại nếu lỗi**: Dùng **Spot Instances** kết hợp Auto Scaling Group với **Mixed Instances Policy** (kết hợp On-Demand làm baseline và Spot để scale-out).
+### 1.3. CHIẾN LƯỢC TOÀN DIỆN: PHỐI HỢP 3 TẦNG TẢI & MIXED INSTANCES POLICY (AWS WELL-ARCHITECTED)
+
+Trong bài thi SAA-C03 và thực tế vận hành enterprise, một hệ thống lớn không bao giờ chỉ dùng một mô hình giá duy nhất. AWS Well-Architected Framework khuyến nghị chia tải của hệ thống thành **3 tầng kiến trúc** để tối ưu hóa chi phí đến mức tối đa:
+
+```text
+Số lượng EC2
+   ▲
+40 │                                   ╭───╮ (Tầng 3: Flash Sale / Batch Jobs / SQS Workers)
+   │                                  ╭╯   ╰╮ ──► DÙNG SPOT INSTANCES (Tiết kiệm tới 90%)
+20 │                  ╭───────────────╯     ╰───────────────╮ (Tầng 2: Giờ cao điểm ban ngày)
+   │                 ╭╯                                     ╰╮ ──► DÙNG ON-DEMAND (Linh hoạt bật/tắt)
+ 4 │ ───────────────────────────────────────────────────────── (Tầng 1: Tải nền thấp nhất lúc 3h sáng)
+   └─────────────────────────────────────────────────────────────► ──► DÙNG SAVINGS PLANS / RI (Rẻ hơn 40-72%)
+     00:00          08:00            12:00                  23:59
+```
+
+#### 1. Tầng 1: Tải nền (Baseline / Steady-state Load)
+* **Bản chất**: Lượng tài nguyên tối thiểu bắt buộc phải duy trì 24/7/365 (ví dụ: tối thiểu 4 instances để duy trì heartbeat, kết nối database, xử lý phiên đêm).
+* **Mô hình mua**: **Savings Plans** hoặc **Standard Reserved Instances (RI)** cam kết 1 hoặc 3 năm.
+* **Lý do**: Vì các máy này chắc chắn không bao giờ tắt, việc cam kết dài hạn giúp AWS giảm giá sâu từ **40% đến 72%** so với giá niêm yết.
+
+#### 2. Tầng 2: Tải đỉnh ban ngày có thể dự đoán (Predictable Peak Load)
+* **Bản chất**: Lượng truy cập tăng cao trong giờ hành chính (từ 8h sáng đến 18h tối cần thêm 16 instances, hết giờ thì tắt).
+* **Mô hình mua**: **On-Demand Instances**.
+* **Lý do**: Các instances này chỉ chạy từ 8 đến 10 tiếng mỗi ngày rồi tắt. Nếu mua cam kết dài hạn (RI/Savings Plans) cho cả 20 máy thì vào ban đêm khi 16 máy này tắt, bạn vẫn bị tính tiền cam kết $\rightarrow$ gây lãng phí lớn. Dùng On-Demand bật lúc nào trả tiền lúc đó, tắt đi là hết tiền.
+
+#### 3. Tầng 3: Tải xử lý ngầm hoặc Flash Sale đột biến (Stateless / Burst / Batch Load)
+* **Bản chất**: 
+  - Đột biến ngắn hạn (Flash Sale 12h trưa) hoặc các batch worker xử lý hàng đợi SQS, render video, tính toán dữ liệu ban đêm.
+  - **Đặc tính kỹ thuật bắt buộc**: Phải là **Stateless** (phiên người dùng lưu ở ElastiCache Redis/DynamoDB) hoặc **Fault-Tolerant** (nhận việc từ SQS, nếu máy chết thì task tự động quay lại SQS cho máy khác xử lý).
+* **Mô hình mua**: **Spot Instances**.
+* **Lý do**: Tiết kiệm chi phí lên đến **90%**. Việc AWS có thể thu hồi máy bất ngờ (thông báo trước 2 phút) hoàn toàn không ảnh hưởng đến tính toàn vẹn của hệ thống.
+
+---
+
+### 1.4. TÍNH NĂNG "MIXED INSTANCES POLICY" TRONG AUTO SCALING GROUP (ASG)
+
+Để triển khai chiến lược 3 tầng trên vào thực tế chỉ với **1 Auto Scaling Group duy nhất**, AWS cung cấp tính năng **Mixed Instances Policy**:
+
+1. **Cấu hình Base Capacity (Tải nền vững chắc)**:
+   - Khai báo cố định: `Set On-Demand Base Capacity = 2 instances`.
+   - Đảm bảo ASG luôn duy trì tối thiểu 2 máy On-Demand kiên cố (hưởng giá rẻ từ Savings Plans ở Tầng 1).
+2. **Cấu hình Scale-out Ratio (Tỷ lệ phân bổ khi mở rộng)**:
+   - Khai báo: `On-Demand Percentage Above Base = 20%` (đồng nghĩa `80% Spot`).
+   - Khi có tải lớn ập đến cần scale thêm 10 instances: ASG sẽ tự động bật **2 máy On-Demand** và **8 máy Spot**.
+3. **Cấu hình Spot Allocation Strategy (Chiến lược dự phòng Spot)**:
+   - Khai báo nhiều Instance Types tương đương nhau (ví dụ: `c5.large`, `c5a.large` chip AMD, `c6g.large` chip Graviton).
+   - Chọn chiến lược: `price-capacity-optimized` $\rightarrow$ AWS sẽ tự động chọn các pool Spot vừa có giá rẻ nhất vừa có dung lượng dồi dào nhất, giảm thiểu tối đa nguy cơ bị thu hồi máy.
 
 ---
 
@@ -120,3 +164,58 @@ Một sàn thương mại điện tử chạy ứng dụng xử lý ảnh và vi
 | **"Highest IOPS, ultra-low latency, temporary cache/scratch"** | **Instance Store** | Chọn Provisioned IOPS EBS (EBS vẫn đi qua mạng, đắt hơn và không nhanh bằng Instance Store). |
 | **"Mission-critical relational DB needing > 64,000 IOPS"** | **EBS io2 Block Express** | Chọn gp3 (gp3 tối đa 16,000 IOPS, không đáp ứng được yêu cầu). |
 | **"Bring Your Own License (BYOL) per socket/core"** | **EC2 Dedicated Hosts** | Chọn Dedicated Instances (không quản lý được số lượng socket/core vật lý). |
+| **"Prevent SSRF attacks when fetching IAM credentials from EC2"** | **Enforce IMDSv2** | Chặn IP 169.254.169.254 (làm EC2 mất quyền lấy credentials hợp lệ). |
+| **"Lowest network latency & highest packet throughput between EC2s"** | **Cluster Placement Group** | Chọn Spread Placement Group (Spread dùng cho HA, phân tán rack vật lý). |
+| **"App takes a long time to warm up cache on startup, needs fast resume"** | **EC2 Hibernation** | Tăng kích thước instance type (không giải quyết được thời gian load cache ban đầu). |
+
+---
+
+## 5. CÁC CHỦ ĐỀ CHUYÊN SÂU NÂNG CAO THƯỜNG GẶP TRONG ĐỀ THI
+
+### 5.1. EC2 Placement Groups (Chiến lược định vị máy chủ vật lý)
+* **Cluster Placement Group**:
+  - Gộp các instances vào cùng một rack phần cứng trong **cùng 1 Availability Zone**.
+  - Đạt độ trễ mạng cực thấp (sub-millisecond) và thông lượng mạng tối đa (10 – 100 Gbps).
+  - *Use Case*: High Performance Computing (HPC), Big Data tính toán phân tán chặt chẽ.
+  - *Rủi ro*: Nếu rack phần cứng gặp sự cố, toàn bộ cụm instances sẽ chết.
+* **Spread Placement Group**:
+  - Phân tán nghiêm ngặt mỗi instance trên một giá đỡ phần cứng (rack) độc lập riêng biệt.
+  - Tối đa **7 instances trên mỗi AZ**. Có thể trải dài qua nhiều AZ trong cùng Region.
+  - *Use Case*: Ứng dụng trọng yếu có số lượng máy ít nhưng cần cách ly lỗi phần cứng tối đa.
+* **Partition Placement Group**:
+  - Chia cụm thành nhiều phân vùng (partitions/racks), mỗi phân vùng chứa nhiều instances. Các phân vùng không dùng chung rack.
+  - Tối đa **7 partitions trên mỗi AZ**.
+  - *Use Case*: Hadoop HDFS, Apache Cassandra, Apache Kafka (mỗi partition đại diện cho 1 failure domain).
+
+---
+
+### 5.2. EC2 Instance Metadata Service: IMDSv1 vs IMDSv2
+* **Địa chỉ truy cập**: `http://169.254.169.254/latest/meta-data/`
+* **Vấn đề an ninh**: Kẻ tấn công lợi dụng lỗi **SSRF (Server-Side Request Forgery)** trên ứng dụng web để gửi HTTP GET tới địa chỉ metadata nhằm lấy IAM Role temporary credentials.
+* **Giải pháp IMDSv2**: Bắt buộc sử dụng mã thông báo phiên (**Session Token**):
+  1. Lấy token: `TOKEN=$(curl -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600")`
+  2. Dùng token lấy dữ liệu: `curl -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/meta-data/`
+* Để bảo vệ EC2: Bật tính năng **Require IMDSv2** (`HttpTokens=required`).
+
+---
+
+### 5.3. Quy trình mã hóa EBS Volume & Chia sẻ Cross-Account
+1. **Mã hóa một Volume chưa mã hóa**:
+   - Snapshot volume cũ $\rightarrow$ Copy Snapshot (tích chọn **Encrypt** với KMS Key) $\rightarrow$ Tạo Volume mới từ Encrypted Snapshot $\rightarrow$ Gắn vào EC2.
+2. **Chia sẻ Encrypted Snapshot sang Account khác**:
+   - Snapshot mã hóa bằng default key `aws/ebs` **KHÔNG THỂ** chia sẻ ra ngoài account.
+   - Bắt buộc phải mã hóa bằng **Customer Managed Key (CMK)** $\rightarrow$ Thêm quyền truy cập khóa KMS cho Account đích trong KMS Key Policy $\rightarrow$ Chia sẻ Snapshot.
+
+---
+
+### 5.4. Hệ sinh thái Amazon FSx (So sánh toàn diện)
+* **FSx for Windows File Server**: Hỗ trợ giao thức SMB, NTFS, tích hợp Microsoft Active Directory, DFS Namespaces. Hỗ trợ Multi-AZ.
+* **FSx for Lustre**: Hệ thống tệp hiệu năng cực cao dành cho HPC, AI/Machine Learning, kết nối trực tiếp hai chiều với Amazon S3.
+* **FSx for NetApp ONTAP**: Hỗ trợ đồng thời cả NFS và SMB, hỗ trợ tính năng Deduplication, Snapshot của NetApp để migrate trực tiếp hạ tầng NAS on-premises lên AWS.
+
+---
+
+### 5.5. EC2 Hibernation (Ngủ đông)
+* Dump toàn bộ dữ liệu trên RAM xuống **Root EBS Volume** trước khi tắt máy.
+* Khi start lại, nạp RAM trực tiếp từ EBS $\rightarrow$ Ứng dụng khôi phục tức thì mà không cần load lại bộ nhớ đệm hay boot lại toàn bộ tiến trình.
+* **Yêu cầu kỹ thuật**: Root volume phải là **EBS, phải được mã hóa (Encrypted)**, và dung lượng đủ chứa toàn bộ RAM.
