@@ -18,8 +18,8 @@
 - [x] **Ngày 3**: EC2 & Pricing Models (On-Demand, Spot, Reserved, Savings Plans, EBS types, EFS, Instance Store)
 - [x] **Ngày 4**: High Availability & Traffic Routing (ALB vs NLB vs GLB, Auto Scaling Policies, Route 53, CloudFront, Global Accelerator)
 - [x] **Ngày 5**: S3 Storage & Data Protection (Storage Classes, Lifecycle Policies, Replication, Versioning, Bucket Policies, Presigned URL)
-- [/] **Ngày 6**: Database Solutions (RDS Multi-AZ vs Read Replica, Aurora Architecture & Global DB, DynamoDB, ElastiCache)
-- [ ] **Ngày 7**: Tổng kết Tuần 1 + Luyện đề củng cố 40 câu
+- [x] **Ngày 6**: Database Solutions (RDS Multi-AZ vs Read Replica, Aurora Architecture & Global DB, DynamoDB, ElastiCache)
+- [/] **Ngày 7**: Tổng kết Tuần 1 + Luyện đề củng cố 40 câu
 
 ### Tuần 2: Security, Serverless, Integration & Disaster Recovery
 - [ ] **Ngày 8**: IAM, Organizations & Multi-Account (SCP, Cross-Account IAM Role, STS AssumeRole)
