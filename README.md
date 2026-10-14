@@ -19,10 +19,10 @@
 - [x] **Ngày 4**: High Availability & Traffic Routing (ALB vs NLB vs GLB, Auto Scaling Policies, Route 53, CloudFront, Global Accelerator)
 - [x] **Ngày 5**: S3 Storage & Data Protection (Storage Classes, Lifecycle Policies, Replication, Versioning, Bucket Policies, Presigned URL)
 - [x] **Ngày 6**: Database Solutions (RDS Multi-AZ vs Read Replica, Aurora Architecture & Global DB, DynamoDB, ElastiCache)
-- [/] **Ngày 7**: Tổng kết Tuần 1 + Luyện đề củng cố 40 câu
+- [x] **Ngày 7**: Tổng kết Tuần 1 + Luyện đề củng cố 40 câu
 
 ### Tuần 2: Security, Serverless, Integration & Disaster Recovery
-- [ ] **Ngày 8**: IAM, Organizations & Multi-Account (SCP, Cross-Account IAM Role, STS AssumeRole)
+- [/] **Ngày 8**: IAM, Organizations & Multi-Account (SCP, Cross-Account IAM Role, STS AssumeRole)
 - [ ] **Ngày 9**: Data Protection & Edge Security (KMS CMK/Key Policies, Secrets Manager vs SSM Parameter Store, WAF, Shield)
 - [ ] **Ngày 10**: Messaging & Decoupling (SQS Standard vs FIFO, SNS, EventBridge, DLQ, Kinesis)
 - [ ] **Ngày 11**: Serverless Compute & Orchestration (Lambda, API Gateway REST vs HTTP, Step Functions)
