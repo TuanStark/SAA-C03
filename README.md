@@ -22,8 +22,8 @@
 - [x] **Ngày 7**: Tổng kết Tuần 1 + Luyện đề củng cố 40 câu
 
 ### Tuần 2: Security, Serverless, Integration & Disaster Recovery
-- [/] **Ngày 8**: IAM, Organizations & Multi-Account (SCP, Cross-Account IAM Role, STS AssumeRole)
-- [ ] **Ngày 9**: Data Protection & Edge Security (KMS CMK/Key Policies, Secrets Manager vs SSM Parameter Store, WAF, Shield)
+- [x] **Ngày 8**: IAM, Organizations & Multi-Account (SCP, Cross-Account IAM Role, STS AssumeRole)
+- [/] **Ngày 9**: Data Protection & Edge Security (KMS CMK/Key Policies, Secrets Manager vs SSM Parameter Store, WAF, Shield)
 - [ ] **Ngày 10**: Messaging & Decoupling (SQS Standard vs FIFO, SNS, EventBridge, DLQ, Kinesis)
 - [ ] **Ngày 11**: Serverless Compute & Orchestration (Lambda, API Gateway REST vs HTTP, Step Functions)
 - [ ] **Ngày 12**: Monitoring, Auditing & Governance (CloudWatch Metrics/Logs/Alarms, CloudTrail, AWS Config)
