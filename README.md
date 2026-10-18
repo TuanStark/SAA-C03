@@ -26,8 +26,8 @@
 - [x] **Ngày 9**: Data Protection & Edge Security (KMS CMK/Key Policies, Secrets Manager vs SSM Parameter Store, WAF, Shield)
 - [x] **Ngày 10**: Messaging & Decoupling (SQS Standard vs FIFO, SNS, EventBridge, DLQ, Kinesis)
 - [x] **Ngày 11**: Serverless Compute & Orchestration (Lambda, API Gateway REST vs HTTP, Step Functions)
-- [/] **Ngày 12**: Monitoring, Auditing & Governance (CloudWatch Metrics/Logs/Alarms, CloudTrail, AWS Config)
-- [ ] **Ngày 13**: High Availability & Disaster Recovery (RTO/RPO, Backup & Restore, Pilot Light, Warm Standby, Multi-Site)
+- [x] **Ngày 12**: Monitoring, Auditing & Governance (CloudWatch Metrics/Logs/Alarms, CloudTrail, AWS Config)
+- [/] **Ngày 13**: High Availability & Disaster Recovery (RTO/RPO, Backup & Restore, Pilot Light, Warm Standby, Multi-Site)
 - [ ] **Ngày 14**: Tổng kết Tuần 2 + Luyện đề hỗn hợp 50 câu
 
 ### Tuần 3: Luyện đề chuyên sâu theo 4 Domain
