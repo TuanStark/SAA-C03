@@ -28,10 +28,10 @@
 - [x] **Ngày 11**: Serverless Compute & Orchestration (Lambda, API Gateway REST vs HTTP, Step Functions)
 - [x] **Ngày 12**: Monitoring, Auditing & Governance (CloudWatch Metrics/Logs/Alarms, CloudTrail, AWS Config)
 - [x] **Ngày 13**: High Availability & Disaster Recovery (RTO/RPO, Backup & Restore, Pilot Light, Warm Standby, Multi-Site)
-- [/] **Ngày 14**: Tổng kết Tuần 2 + Luyện đề hỗn hợp 50 câu
+- [x] **Ngày 14**: Tổng kết Tuần 2 + Luyện đề hỗn hợp 50 câu
 
 ### Tuần 3: Luyện đề chuyên sâu theo 4 Domain
-- [ ] **Ngày 15**: Đề chẩn đoán 65 câu (130 phút) + Phân tích ma trận lỗi
+- [/] **Ngày 15**: Đề chẩn đoán 65 câu (130 phút) + Phân tích ma trận lỗi
 - [ ] **Ngày 16**: Domain 1 Deep Dive - Secure Architectures
 - [ ] **Ngày 17**: Domain 2 Deep Dive - Resilient Architectures
 - [ ] **Ngày 18**: Domain 3 Deep Dive - High-Performing Architectures
